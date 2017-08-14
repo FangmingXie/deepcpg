@@ -25,6 +25,37 @@ class DnaModel(Model):
     def inputs(self, dna_wlen):
         return [kl.Input(shape=(dna_wlen, 4), name='dna')]
 
+# added by Fangming 08-14-2017
+class CnnL1f101L1h350(DnaModel):
+    """CNN with one convolutional and one fully-connected layer with 128 units.
+
+    .. code::
+
+        Parameters: ? 
+        Specification: conv[100@11]_mp[4]_fc[350]_do
+    """
+
+    def __init__(self, nb_hidden=350, *args, **kwargs):
+        super(CnnL1f101L1h350, self).__init__(*args, **kwargs)
+        self.nb_hidden = nb_hidden
+
+    def __call__(self, inputs):
+        x = inputs[0]
+
+        w_reg = kr.WeightRegularizer(l1=self.l1_decay, l2=self.l2_decay)
+        x = kl.Conv1D(101, 11, W_regularizer=w_reg)(x)
+        x = kl.Activation('relu')(x)
+        x = kl.MaxPooling1D(4)(x)
+
+        x = kl.Flatten()(x)
+
+        w_reg = kr.WeightRegularizer(l1=self.l1_decay, l2=self.l2_decay)
+        x = kl.Dense(self.nb_hidden, init=self.init, W_regularizer=w_reg)(x)
+        x = kl.Activation('relu')(x)
+        x = kl.Dropout(self.dropout)(x)
+
+        return self._build(inputs, x)
+
 # added by Fangming 08-04-2017
 class CnnL1f100L1h350(DnaModel):
     """CNN with one convolutional and one fully-connected layer with 128 units.
