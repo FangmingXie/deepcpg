@@ -367,9 +367,13 @@ class App(object):
         g.add_argument(
             '--log_file',
             help='Write log messages to file')
+        g.add_argument(
+            '--bulk', 
+            action='store_true',
+            help='turn this on if this is bulk sample data')
         return p
 
-    def main(self, name, opts):
+    def main(self, name, opts): 
         if opts.seed is not None:
             np.random.seed(opts.seed)
 
@@ -514,10 +518,17 @@ class App(object):
                     for name, value in six.iteritems(chunk_outputs['cpg']):
                         assert len(value) == len(chunk_pos)
                         # Round continuous values
-                        out_group.create_dataset('cpg/%s' % name,
-                                                 data=value.round(),
-                                                 dtype=np.int8,
-                                                 compression='gzip')
+                        ####### Fangming
+                        if opts.bulk: 
+                            out_group.create_dataset('bulk/%s' % name,
+                                                     data=value.round(),
+                                                     dtype=np.int8,
+                                                     compression='gzip')
+                        else:
+                            out_group.create_dataset('cpg/%s' % name,
+                                                     data=value.round(),
+                                                     dtype=np.int8,
+                                                     compression='gzip')
                     # Compute and write statistics
                     if cpg_stats_meta is not None:
                         log.info('Computing per CpG statistics ...')

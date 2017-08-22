@@ -166,7 +166,10 @@ def perf_logs_str(logs):
 
 def get_metrics(output_name):
     _output_name = output_name.split(OUTPUT_SEP)
+    # print(_output_name)
     if _output_name[0] == 'cpg':
+        # ADDED BY FANGMING 08/15/2017 (cancelled)
+        # metrics = CLA_METRICS + REG_METRICS
         metrics = CLA_METRICS
     elif _output_name[0] == 'bulk':
         metrics = REG_METRICS + CLA_METRICS
@@ -441,6 +444,7 @@ class App(object):
                 metrics[metric_fun.__name__] = True
         metrics = ['loss'] + list(metrics.keys())
 
+        # verbose = False (Fangming)
         self.perf_logger = cbk.PerformanceLogger(
             callbacks=[save_lc],
             metrics=metrics,
@@ -554,9 +558,18 @@ class App(object):
         opts = self.opts
         log = self.log
 
+
+        ############# Fangming
+        # opts.output_names = 'bulk/.*'
         output_names = dat.get_output_names(opts.train_files[0],
                                             regex=opts.output_names,
                                             nb_key=opts.nb_output)
+        ############# Fangming
+        # print(output_names)
+        # print(opts.train_files[0])
+        # print(opts.output_names)
+
+        # print(output_names)
         if not output_names:
             raise ValueError('No outputs found!')
 
@@ -730,27 +743,36 @@ class App(object):
         if class_weights:
             self.print_class_weights(class_weights)
 
-        output_weights = None
-        if opts.output_weights:
-            log.info('Initializing output weights ...')
-            output_weights = get_output_weights(output_names,
-                                                opts.output_weights)
-            print('Output weights:')
-            for output_name in output_names:
-                if output_name in output_weights:
-                    print('%s: %.2f' % (output_name,
-                                        output_weights[output_name]))
-            print()
+        # output_weights = None
+        # if opts.output_weights:
+        #     log.info('Initializing output weights ...')
+        #     output_weights = get_output_weights(output_names,
+        #                                         opts.output_weights)
+        #     print('Output weights:')
+        #     for output_name in output_names:
+        #         if output_name in output_weights:
+        #             print('%s: %.2f' % (output_name,
+        #                                 output_weights[output_name]))
+        #     print()
+
+        # compile model: 
+        # optimizer, loss function (objective function), metrics to be evaluated
 
         self.metrics = dict()
         for output_name in output_names:
+            # print(output_name)
+            # print(get_metrics(output_name))
             self.metrics[output_name] = get_metrics(output_name)
 
         optimizer = Adam(lr=opts.learning_rate)
+        ############### Fangming
         model.compile(optimizer=optimizer,
                       loss=mod.get_objectives(output_names),
-                      loss_weights=output_weights,
+                      #loss_weights=output_weights,
+                      #metrics=['mse'])
                       metrics=self.metrics)
+        # print(mod.get_objectives(output_names))
+        # print(self.metrics)
 
         log.info('Loading data ...')
         replicate_names = dat.get_replicate_names(

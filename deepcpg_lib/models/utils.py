@@ -223,6 +223,8 @@ def get_objectives(output_names):
             objective = 'categorical_crossentropy'
         else:
             objective = 'binary_crossentropy'
+            #### ADDED BY FANGMING 08/15/2017 (cancelled)
+            # objective = 'mean_squared_error'
         objectives[output_name] = objective
     return objectives
 

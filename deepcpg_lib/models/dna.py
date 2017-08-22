@@ -25,29 +25,68 @@ class DnaModel(Model):
     def inputs(self, dna_wlen):
         return [kl.Input(shape=(dna_wlen, 4), name='dna')]
 
-# added by Fangming 08-14-2017
-class CnnL1f101L1h350(DnaModel):
+
+# added by Fangming 08-22-2017
+class CnnL1f320LstmL1h320(DnaModel):
     """CNN with one convolutional and one fully-connected layer with 128 units.
 
     .. code::
 
         Parameters: ? 
-        Specification: conv[100@11]_mp[4]_fc[350]_do
+        Specification: conv[320@26]_mp[13]_lstm_fc[320]_do
     """
 
-    def __init__(self, nb_hidden=350, *args, **kwargs):
-        super(CnnL1f101L1h350, self).__init__(*args, **kwargs)
+    def __init__(self, nb_hidden=320, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.nb_hidden = nb_hidden
 
     def __call__(self, inputs):
         x = inputs[0]
 
+        nb_kernals = 320
         w_reg = kr.WeightRegularizer(l1=self.l1_decay, l2=self.l2_decay)
-        x = kl.Conv1D(101, 11, W_regularizer=w_reg)(x)
+        x = kl.Conv1D(nb_kernals, 26, W_regularizer=w_reg)(x)
         x = kl.Activation('relu')(x)
-        x = kl.MaxPooling1D(4)(x)
+        x = kl.MaxPooling1D(13)(x)
 
+        # x = kl.Bidirectional(kl.LSTM(nb_kernals, return_sequences=True))(x)
+        # x = kl.Flatten()(x)
+        x = kl.Bidirectional(kl.LSTM(nb_kernals, return_sequences=False))(x)
+
+        w_reg = kr.WeightRegularizer(l1=self.l1_decay, l2=self.l2_decay)
+        x = kl.Dense(self.nb_hidden, init=self.init, W_regularizer=w_reg)(x)
+        x = kl.Activation('relu')(x)
+        x = kl.Dropout(self.dropout)(x)
+
+        return self._build(inputs, x)
+
+
+# added by Fangming 08-22-2017
+class CnnL1f320LstmfL1h320(DnaModel):
+    """CNN with one convolutional and one fully-connected layer with 128 units.
+
+    .. code::
+
+        Parameters: ? 
+        Specification: conv[320@26]_mp[13]_lstmf_fc[320]_do
+    """
+
+    def __init__(self, nb_hidden=320, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.nb_hidden = nb_hidden
+
+    def __call__(self, inputs):
+        x = inputs[0]
+
+        nb_kernals = 320
+        w_reg = kr.WeightRegularizer(l1=self.l1_decay, l2=self.l2_decay)
+        x = kl.Conv1D(nb_kernals, 26, W_regularizer=w_reg)(x)
+        x = kl.Activation('relu')(x)
+        x = kl.MaxPooling1D(13)(x)
+
+        x = kl.Bidirectional(kl.LSTM(nb_kernals, return_sequences=True))(x)
         x = kl.Flatten()(x)
+        # x = kl.Bidirectional(kl.LSTM(nb_kernals, return_sequences=False))(x)
 
         w_reg = kr.WeightRegularizer(l1=self.l1_decay, l2=self.l2_decay)
         x = kl.Dense(self.nb_hidden, init=self.init, W_regularizer=w_reg)(x)
